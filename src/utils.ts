@@ -13,9 +13,28 @@ const getJIRAIssueKey = (input: string, regexp: RegExp = JIRA_REGEX_MATCHER): st
   return matches ? matches[matches.length - 1] : null;
 };
 
+// New function to extract multiple JIRA issue keys
+const getJIRAIssueKeys = (input: string, regexp: RegExp = JIRA_REGEX_MATCHER): string[] => {
+  const keys: string[] = [];
+  const globalRegexp = new RegExp(regexp.source, 'gi');
+  let match;
+
+  while ((match = globalRegexp.exec(input)) !== null) {
+    keys.push(match[match.length - 1]);
+  }
+
+  return keys;
+};
+
 export const getJIRAIssueKeyByDefaultRegexp = (input: string): string | null => {
   const key = getJIRAIssueKey(input, new RegExp(JIRA_REGEX_MATCHER));
   return key ? key.toUpperCase() : null;
+};
+
+// New function to extract multiple JIRA issue keys using default regexp
+export const getJIRAIssueKeysByDefaultRegexp = (input: string): string[] => {
+  const keys = getJIRAIssueKeys(input, JIRA_REGEX_MATCHER);
+  return keys.map(key => key.toUpperCase());
 };
 
 export const getJIRAIssueKeysByCustomRegexp = (input: string, numberRegexp: string, projectKey?: string): string | null => {
@@ -27,6 +46,17 @@ export const getJIRAIssueKeysByCustomRegexp = (input: string, numberRegexp: stri
   }
   const key = projectKey ? `${projectKey}-${ticketNumber}` : ticketNumber;
   return key.toUpperCase();
+};
+
+// New function to extract multiple JIRA issue keys using custom regexp
+export const getMultipleJIRAIssueKeysByCustomRegexp = (input: string, numberRegexp: string, projectKey?: string): string[] => {
+  const customRegexp = new RegExp(numberRegexp, 'gi');
+  const ticketNumbers = getJIRAIssueKeys(input, customRegexp);
+
+  return ticketNumbers.map(ticketNumber => {
+    const key = projectKey ? `${projectKey}-${ticketNumber}` : ticketNumber;
+    return key.toUpperCase();
+  });
 };
 
 export const shouldSkipBranch = (branch: string, additionalIgnorePattern?: string): boolean => {
@@ -77,4 +107,25 @@ export const buildPRDescription = (details: JIRADetails) => {
   <a href="${details.url}" title="${displayKey}" target="_blank"><img alt="${details.type.name}" src="${details.type.icon}" /> ${displayKey}</a>
   ${details.summary}
 </td></tr></tbody></table>`;
+};
+
+// New function to build PR description for multiple JIRA issues
+export const buildMultipleJIRAPRDescription = (detailsList: JIRADetails[]) => {
+  if (detailsList.length === 0) {
+    return '';
+  }
+
+  if (detailsList.length === 1) {
+    return buildPRDescription(detailsList[0]);
+  }
+
+  const rows = detailsList.map(details => {
+    const displayKey = details.key.toUpperCase();
+    return `<tr><td>
+    <a href="${details.url}" title="${displayKey}" target="_blank"><img alt="${details.type.name}" src="${details.type.icon}" /> ${displayKey}</a>
+    ${details.summary}
+  </td></tr>`;
+  }).join('\n');
+
+  return `<table><tbody>\n${rows}\n</tbody></table>`;
 };

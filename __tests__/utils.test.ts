@@ -1,6 +1,6 @@
 import { HIDDEN_MARKER_END, HIDDEN_MARKER_START, WARNING_MESSAGE_ABOUT_HIDDEN_MARKERS } from '../src/constants';
 import { JIRADetails } from '../src/types';
-import { getJIRAIssueKeyByDefaultRegexp, getJIRAIssueKeysByCustomRegexp, getPRDescription, shouldSkipBranch, buildPRDescription } from '../src/utils';
+import { getJIRAIssueKeyByDefaultRegexp, getJIRAIssueKeysByDefaultRegexp, getJIRAIssueKeysByCustomRegexp, getMultipleJIRAIssueKeysByCustomRegexp, getPRDescription, shouldSkipBranch, buildPRDescription, buildMultipleJIRAPRDescription } from '../src/utils';
 
 jest.spyOn(console, 'log').mockImplementation(); // avoid actual console.log in test output
 
@@ -135,5 +135,73 @@ describe('buildPRDescription()', () => {
   <a href="example.com/ABC-123" title="ABC-123" target="_blank"><img alt="story" src="icon.png" /> ABC-123</a>
   Sample summary
 </td></tr></tbody></table>`);
+  });
+});
+
+describe('getJIRAIssueKeysByDefaultRegexp()', () => {
+  it('gets multiple jira keys from different strings', () => {
+    expect(getJIRAIssueKeysByDefaultRegexp('fix/login-protocol-es-43')).toEqual(['ES-43']);
+    expect(getJIRAIssueKeysByDefaultRegexp('[ES-43, ES-15] Feature description')).toEqual(['ES-43', 'ES-15']);
+    expect(getJIRAIssueKeysByDefaultRegexp('ABC-123 DEF-456 GHI-789')).toEqual(['ABC-123', 'DEF-456', 'GHI-789']);
+    expect(getJIRAIssueKeysByDefaultRegexp('feature/ABC-123-and-DEF-456-implementation')).toEqual(['ABC-123', 'DEF-456']);
+
+    expect(getJIRAIssueKeysByDefaultRegexp('feature/missingKey')).toEqual([]);
+    expect(getJIRAIssueKeysByDefaultRegexp('')).toEqual([]);
+  });
+});
+
+describe('getMultipleJIRAIssueKeysByCustomRegexp()', () => {
+  it('gets multiple jira keys with project name', () => {
+    expect(getMultipleJIRAIssueKeysByCustomRegexp('18,345,789', '\\d+', 'PRJ')).toEqual(['PRJ-18', 'PRJ-345', 'PRJ-789']);
+    expect(getMultipleJIRAIssueKeysByCustomRegexp('fix/123-and-456-implementation', '\\d+', 'TEST')).toEqual(['TEST-123', 'TEST-456']);
+  });
+
+  it('gets multiple jira keys without project name', () => {
+    expect(getMultipleJIRAIssueKeysByCustomRegexp('ABC-123 DEF-456', '[A-Z]+-\\d+')).toEqual(['ABC-123', 'DEF-456']);
+    expect(getMultipleJIRAIssueKeysByCustomRegexp('fix/es-43-and-es-89', 'es-\\d+')).toEqual(['ES-43', 'ES-89']);
+  });
+});
+
+describe('buildMultipleJIRAPRDescription()', () => {
+  const createDetails = (key: string, summary: string): JIRADetails => ({
+    key,
+    summary,
+    url: `example.com/${key}`,
+    type: {
+      name: 'story',
+      icon: 'icon.png',
+    },
+    project: {
+      name: 'name',
+      url: 'url',
+      key: 'key',
+    },
+  });
+
+  it('should return empty string for empty array', () => {
+    expect(buildMultipleJIRAPRDescription([])).toEqual('');
+  });
+
+  it('should return single description for one issue', () => {
+    const details = createDetails('ABC-123', 'Sample summary');
+    const result = buildMultipleJIRAPRDescription([details]);
+
+    expect(result).toEqual(`<table><tbody><tr><td>
+  <a href="example.com/ABC-123" title="ABC-123" target="_blank"><img alt="story" src="icon.png" /> ABC-123</a>
+  Sample summary
+</td></tr></tbody></table>`);
+  });
+
+  it('should return list format for multiple issues', () => {
+    const details1 = createDetails('ABC-123', 'First issue');
+    const details2 = createDetails('DEF-456', 'Second issue');
+    const result = buildMultipleJIRAPRDescription([details1, details2]);
+
+    expect(result).toContain('<table><tbody>');
+    expect(result).toContain('ABC-123');
+    expect(result).toContain('DEF-456');
+    expect(result).toContain('First issue');
+    expect(result).toContain('Second issue');
+    expect(result).toContain('</tbody></table>');
   });
 });

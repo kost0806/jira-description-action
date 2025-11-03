@@ -2,6 +2,8 @@ export enum ESource {
   branch = 'branch',
   prTitle = 'pr-title',
   both = 'both',
+  commits = 'commits',
+  all = 'all',
 }
 
 export interface PullRequestParams {
@@ -100,6 +102,7 @@ export interface IActionInputs {
   JIRA_PROJECT_KEY: string;
   CUSTOM_ISSUE_NUMBER_REGEXP: string;
   FAIL_WHEN_JIRA_ISSUE_NOT_FOUND: boolean;
+  USE_MULTIPLE_JIRA_ISSUES: boolean;
 }
 
 export interface IGithubData {

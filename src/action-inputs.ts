@@ -9,6 +9,7 @@ export const getInputs = (): IActionInputs => {
   const CUSTOM_ISSUE_NUMBER_REGEXP = core.getInput('custom-issue-number-regexp', { required: false });
   const JIRA_PROJECT_KEY = core.getInput('jira-project-key', { required: false });
   const FAIL_WHEN_JIRA_ISSUE_NOT_FOUND = core.getInput('fail-when-jira-issue-not-found', { required: false }) === 'true' || false;
+  const USE_MULTIPLE_JIRA_ISSUES = core.getInput('use-multiple-jira-issues', { required: false }) === 'true' || false;
   const WHAT_TO_USE: ESource = (core.getInput('use', { required: false }) as ESource) || ESource.prTitle;
   return {
     JIRA_TOKEN,
@@ -18,6 +19,7 @@ export const getInputs = (): IActionInputs => {
     JIRA_PROJECT_KEY,
     CUSTOM_ISSUE_NUMBER_REGEXP,
     FAIL_WHEN_JIRA_ISSUE_NOT_FOUND,
+    USE_MULTIPLE_JIRA_ISSUES,
     JIRA_BASE_URL: JIRA_BASE_URL.endsWith('/') ? JIRA_BASE_URL.replace(/\/$/, '') : JIRA_BASE_URL,
   };
 };

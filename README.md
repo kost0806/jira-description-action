@@ -25,11 +25,33 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           jira-token: ${{ secrets.JIRA_TOKEN }}
           jira-base-url: https://your-domain.atlassian.net
-          skip-branches: '^(production-release|main|master|release\/v\d+)$' #optional 
+          skip-branches: '^(production-release|main|master|release\/v\d+)$' #optional
           custom-issue-number-regexp: '^\d+' #optional
-          jira-project-key: 'PRJ' #optional    
+          jira-project-key: 'PRJ' #optional
 ```
-`
+
+### Multiple JIRA Issues Example
+
+To extract multiple JIRA issues from branch names, PR titles, and commit messages:
+
+```yml
+name: jira-description-action
+on:
+  pull_request:
+    types: [opened, edited]
+jobs:
+  add-jira-description:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: cakeinpanic/jira-description-action@master
+        name: jira-description-action
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          jira-token: ${{ secrets.JIRA_TOKEN }}
+          jira-base-url: https://your-domain.atlassian.net
+          use-multiple-jira-issues: 'true'  # Enable multiple issues
+          use: 'all'  # Extract from branch, PR title, and commits
+```
 
 ## Options
 
@@ -39,18 +61,22 @@ jobs:
 | `jira-token`           | Token used to fetch Jira Issue information.  Check [below](#jira-token) for more details on how to generate the token.                                                                                                          | true     | null    |
 | `jira-base-url`        | The subdomain of JIRA cloud that you use to access it. Ex: "https://your-domain.atlassian.net".                                                                                                                                                                                                                    | true     | null    |
 | `skip-branches`        | A regex to ignore running `jira-description-action` on certain branches, like production etc.                                                                                                                                                                                                                                    | false    | ' '     |
-| `use`                  | Enum: `branch \| pr-title \| both`, to search for issue number in branch name or in PR title                                                                                                                                                                                                                               | false    | pr-title     |
+| `use`                  | Enum: `branch \| pr-title \| both \| commits \| all`, to search for issue number in branch name, PR title, commit messages, or all sources                                                                                                                                                                                                                               | false    | pr-title     |
+| `use-multiple-jira-issues` | Enable extraction of multiple JIRA issues from branch name, PR title, and commit messages | false    | false     |
 | `jira-project-key`     | Key of project in jira. First part of issue key | false    | none     |
 | `custom-issue-number-regexp` | Custom regexp to extract issue number from branch name. If not specified, default regexp would be used.  | false    | none     |
 | `fail-when-jira-issue-not-found` | Should action fail if jira issue is not found in jira  | false    | false     |
 
 ## Outputs
 
-| key                    | description                                                                                                                                                                                                                                                                                                     
+| key                    | description
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `jira-issue-key`         | The JIRA issue key. If key is not found the value is an empty string |****
+| `jira-issue-key`         | The JIRA issue key. If key is not found the value is an empty string. For multiple issues, this is the first one |
+| `jira-issue-keys`        | Comma-separated list of all JIRA issue keys found (when `use-multiple-jira-issues` is enabled) |
 | `jira-issue-found`         | Indication whether a jira issue was found or not |
-| `jira-issue-source`         | Indication how the jira issue was found, by - `branch \| pr-title \| null` |
+| `jira-issue-count`       | Number of JIRA issues found (when `use-multiple-jira-issues` is enabled) |
+| `jira-issue-source`         | Indication how the jira issue was found, by - `branch \| pr-title \| commits \| null`. For multiple issues, this is the source of the first one |
+| `jira-issue-sources`     | Comma-separated list of sources for all JIRA issues found (when `use-multiple-jira-issues` is enabled) |
 
 Tokens are private, so it's suggested adding them as [GitHub secrets](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets).
 

@@ -12,7 +12,7 @@ inputs:
     description: 'The subdomain of JIRA cloud that you use to access it. Ex: "https://your-domain.atlassian.net"'
     required: true
   use:
-    description: 'Where to look for issue key: branch | pr-title | both'
+    description: 'Where to look for issue key: branch | pr-title | both | commits | all'
     required: false
   skip-branches:
     description: 'A regex to ignore running on certain branches, like production etc.'
@@ -30,13 +30,23 @@ inputs:
       description: ' Mark the PR status check as failed when a jira issue is not found'
       required: false
       default: 'false'
+  use-multiple-jira-issues:
+      description: 'Enable extraction of multiple JIRA issues from branch name, PR title, and commit messages'
+      required: false
+      default: 'false'
 outputs:
   jira-issue-key:
-    description: 'The JIRA issue key. If key is not found the value is an empty string'
+    description: 'The JIRA issue key. If key is not found the value is an empty string. For multiple issues, this is the first one'
+  jira-issue-keys:
+    description: 'Comma-separated list of all JIRA issue keys found (when use-multiple-jira-issues is enabled)'
   jira-issue-found:
     description: 'Indication whether a jira issue was found or not'
+  jira-issue-count:
+    description: 'Number of JIRA issues found (when use-multiple-jira-issues is enabled)'
   jira-issue-source:
-    description: 'Indication how the jira issue was found, by - branch | pr-title | null'
+    description: 'Indication how the jira issue was found, by - branch | pr-title | commits | null. For multiple issues, this is the source of the first one'
+  jira-issue-sources:
+    description: 'Comma-separated list of sources for all JIRA issues found (when use-multiple-jira-issues is enabled)'
 runs:
   using: 'node20'
   main: 'lib/index.js'
